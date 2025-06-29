@@ -3,34 +3,36 @@
 import React from "react";
 import { useForm } from "react-hook-form";
 import { TextField, Button, Typography, Link } from "@mui/material";
-// import { signup, SignupFormInputs } from "@/app/componeNts/signup";
+import { useRouter } from "next/navigation";
+
+type SignupFormInputs = {
+  name: string;
+  email: string;
+  password: string;
+};
 
 export default function SignupPage() {
-  type SignupFormInputs = {
-    name: string;
-    email: string;
-    password: string;
-  };
-  const { register, handleSubmit } = useForm<SignupFormInputs>();
-  const rere = async (data: SignupFormInputs) => {
-    console.log("Submitting signup data:", data);
+  const router = useRouter();
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<SignupFormInputs>();
 
+  const onSubmit = async (data: SignupFormInputs) => {
     try {
-      const response = await fetch("http://localhost:5000/api/users/create", {
+      const response = await fetch("http://localhost:5000/api/user/create", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
 
       const result = await response.json();
-      console.log("Signup response:", result);
 
       if (response.ok) {
-        console.log("Signup successful!", result);
         localStorage.setItem("userId", result.userId);
-        window.location.href = "/"; // Adjust as needed
+        router.push("/");
       } else {
-        console.error("Signup failed:", result.message);
         alert(result.message || "Signup failed");
       }
     } catch (error) {
@@ -45,10 +47,15 @@ export default function SignupPage() {
         Sign Up
       </Typography>
 
-      <form onSubmit={handleSubmit(rere)} className="w-full max-w-sm space-y-4">
+      <form
+        onSubmit={handleSubmit(onSubmit)}
+        className="w-full max-w-sm space-y-4"
+      >
         <TextField
           label="Name"
-          {...register("name", { required: true })}
+          {...register("name", { required: "Name is required" })}
+          error={!!errors.name}
+          helperText={errors.name?.message}
           fullWidth
           InputLabelProps={{ style: { color: "#ccc" } }}
           InputProps={{ style: { color: "#fff" } }}
@@ -57,7 +64,9 @@ export default function SignupPage() {
         <TextField
           label="Email"
           type="email"
-          {...register("email", { required: true })}
+          {...register("email", { required: "Email is required" })}
+          error={!!errors.email}
+          helperText={errors.email?.message}
           fullWidth
           InputLabelProps={{ style: { color: "#ccc" } }}
           InputProps={{ style: { color: "#fff" } }}
@@ -66,14 +75,25 @@ export default function SignupPage() {
         <TextField
           label="Password"
           type="password"
-          {...register("password", { required: true, minLength: 6 })}
+          {...register("password", {
+            required: "Password is required",
+            minLength: { value: 6, message: "Minimum 6 characters" },
+          })}
+          error={!!errors.password}
+          helperText={errors.password?.message}
           fullWidth
           InputLabelProps={{ style: { color: "#ccc" } }}
           InputProps={{ style: { color: "#fff" } }}
         />
 
-        <Button type="submit" variant="contained" color="primary" fullWidth>
-          Sign Up
+        <Button
+          type="submit"
+          variant="contained"
+          color="primary"
+          fullWidth
+          disabled={isSubmitting}
+        >
+          {isSubmitting ? "Signing up..." : "Sign Up"}
         </Button>
       </form>
 

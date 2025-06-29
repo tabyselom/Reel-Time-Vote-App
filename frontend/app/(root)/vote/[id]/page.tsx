@@ -8,7 +8,8 @@ import {
   FormControlLabel,
   Typography,
 } from "@mui/material";
-import { useRouter, useParams } from "next/navigation";
+
+import { useRouter } from "next/navigation";
 import { io } from "socket.io-client";
 
 const socket = io("http://localhost:5000");
@@ -28,9 +29,9 @@ interface Poll {
 export default function VotePage({ params }: { params: { id: string } }) {
   const [poll, setPoll] = useState<Poll | null>(null);
   const [selectedOption, setSelectedOption] = useState<string>("");
-  const router = useRouter();
-  const { id } = useParams();
   const [showVotes, setShowVotes] = useState(false);
+  const router = useRouter();
+  const { id } = params;
 
   const fetchPoll = async () => {
     try {
@@ -49,13 +50,20 @@ export default function VotePage({ params }: { params: { id: string } }) {
   useEffect(() => {
     socket.on("vote_updated", (data) => {
       console.log("Vote updated for option:", data.optionId);
-      fetchPoll(); // refresh poll data on vote update
+      fetchPoll();
     });
 
     return () => {
       socket.off("vote_updated");
     };
   }, []);
+
+  useEffect(() => {
+    const storedPollId = localStorage.getItem("pollid");
+    if (storedPollId === id) {
+      setShowVotes(true);
+    }
+  }, [id]);
 
   const handleVote = async () => {
     if (!selectedOption) {
@@ -66,23 +74,20 @@ export default function VotePage({ params }: { params: { id: string } }) {
     try {
       const response = await fetch(
         `http://localhost:5000/api/poll/vote/${selectedOption}`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            user_id: localStorage.getItem("userId"),
-          }),
-        }
+        { method: "POST" }
       );
 
       const result = await response.json();
       if (response.ok) {
         alert("Vote submitted!");
-        socket.emit("vote_cast", { optionId: selectedOption });
+        localStorage.setItem("pollid", id);
         setShowVotes(true);
-        router.push("/");
+        await fetchPoll();
+        // immediately refresh poll data here
+        socket.emit("vote_cast", { optionId: selectedOption });
       } else {
-        alert(result.message || "Failed to vote.");
+        alert(result.error || "Failed to vote.");
+        setShowVotes(true);
       }
     } catch (error) {
       console.error("Vote failed:", error);
@@ -115,16 +120,14 @@ export default function VotePage({ params }: { params: { id: string } }) {
             value={opt.id}
             control={<Radio sx={{ color: "white" }} />}
             label={
-              <>
-                <span className="text-white">
-                  {opt.text}
-                  {showVotes && (
-                    <span className="ml-2 text-gray-300">
-                      ({opt.votes_count} votes)
-                    </span>
-                  )}
-                </span>
-              </>
+              <span className="text-white">
+                {opt.text}
+                {showVotes && (
+                  <span className="ml-2 text-gray-300">
+                    ({opt.votes_count} votes)
+                  </span>
+                )}
+              </span>
             }
           />
         ))}

@@ -11,9 +11,10 @@ const listPoll = async (req: Request, res: Response) => {
       where: { user_id: req.query.userId as string },
       include: { options: true },
     });
-    if (!myPolls) {
-      res.status(404).json({ error: "Poll not found" });
+    if (myPolls.length === 0) {
+      res.status(404).json({ error: "No polls found" });
     }
+
     res.status(200).json(myPolls);
   } catch (error) {
     console.error("Error fetching poll:", error);
@@ -93,26 +94,21 @@ const updatePoll = async (
   res: Response
 ) => {
   const pollId = req.params.id;
-  const userId = Number(req.query.userId); // assuming your DB user_id is a number
+  const userId = String(req.query.userId);
 
   try {
-    const pollData = await prisma.polls.findUnique({
-      where: { id: pollId },
-    });
-
+    const pollData = await prisma.polls.findUnique({ where: { id: pollId } });
     if (!pollData) {
       res.status(404).json({ error: "Poll not found" });
-    } else if (String(pollData.user_id) !== String(userId)) {
-      res
-        .status(403)
-        .json({ error: "You are not authorized to update this poll" });
+      return;
     }
+
+    if (String(pollData.user_id) !== userId)
+      res.status(403).json({ error: "Unauthorized" });
 
     const updatedPoll = await prisma.polls.update({
       where: { id: pollId },
-      data: {
-        question: req.body.question,
-      },
+      data: { question: req.body.question },
     });
 
     res.status(200).json(updatedPoll);
@@ -124,7 +120,7 @@ const updatePoll = async (
 
 const deletePoll = async (req: Request<{ id: string }>, res: Response) => {
   const pollId = req.params.id;
-  const userId = Number(req.query.userId);
+  const userId = String(req.query.userId);
   try {
     const pollData = await prisma.polls.findUnique({
       where: { id: pollId },
@@ -164,17 +160,16 @@ const incrementVotes = async (req: Request<{ id: string }>, res: Response) => {
     const voteIp = req.headers["x-forwarded-for"] || req.socket.remoteAddress;
     const existingVote = await prisma.votes.findFirst({
       where: {
-        option_id: optionId,
+        poll_id: pollId,
         voter_ip: String(voteIp),
       },
     });
     if (existingVote) {
       res.status(400).json({ error: "You have already voted for this option" });
     } else {
-      const voteCount: number = option.votes_count || 0;
       const updatedOption = await prisma.options.update({
         where: { id: optionId },
-        data: { votes_count: voteCount + 1 },
+        data: { votes_count: { increment: 1 } },
       });
 
       await prisma.votes.create({

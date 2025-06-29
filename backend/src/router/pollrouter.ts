@@ -15,6 +15,6 @@ router.get("/list", listPoll);
 router.post("/create", createPoll);
 router.put("/edit/:id", updatePoll);
 router.delete("/delete/:id", deletePoll);
-router.put("/vote/:id", incrementVotes);
+router.post("/vote/:id", incrementVotes);
 
 export default router;
