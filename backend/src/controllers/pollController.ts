@@ -150,6 +150,7 @@ const deletePoll = async (req: Request<{ id: string }>, res: Response) => {
 const incrementVotes = async (req: Request<{ id: string }>, res: Response) => {
   const optionId = req.params.id;
   const io = req.app.locals.io;
+
   try {
     const option = await prisma.options.findUnique({
       where: { id: optionId },
@@ -160,11 +161,11 @@ const incrementVotes = async (req: Request<{ id: string }>, res: Response) => {
     }
 
     const pollId = option.poll_id;
-    const voteIp = req.ip ?? ""; // Get the IP address of the request, fallback to empty string if undefined
+    const voteIp = req.headers["x-forwarded-for"] || req.socket.remoteAddress;
     const existingVote = await prisma.votes.findFirst({
       where: {
         option_id: optionId,
-        voter_ip: voteIp,
+        voter_ip: String(voteIp),
       },
     });
     if (existingVote) {
@@ -175,17 +176,21 @@ const incrementVotes = async (req: Request<{ id: string }>, res: Response) => {
         where: { id: optionId },
         data: { votes_count: voteCount + 1 },
       });
-      // Record the vote with the voter's IP address
+
       await prisma.votes.create({
         data: {
           poll_id: pollId,
           option_id: optionId,
-          voter_ip: voteIp, // Store the voter's IP address
+          voter_ip: String(voteIp),
         },
       });
 
       const options = await prisma.options.findMany({
         where: { poll_id: updatedOption.poll_id },
+      });
+      io.emit("voteUpdate", {
+        optionId,
+        votes_count: updatedOption.votes_count,
       });
       io.emit("voteCountUpdated", {
         pollId: updatedOption.poll_id,
