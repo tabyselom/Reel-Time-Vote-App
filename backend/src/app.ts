@@ -5,22 +5,16 @@ import pollRouter from "./router/pollrouter";
 import errorHandler from "./middleware/errorHandler";
 import { Server } from "socket.io";
 import { createServer } from "http";
-import { PrismaClient } from "@prisma/client";
-import db from "./db/polldb";
+import cors from "cors";
 
-dotenv.config();
 const app = express();
 const server = createServer(app);
-const io = new Server(server, {
-  cors: {
-    origin: "",
-  },
-});
+const io = new Server(server);
 const PORT = process.env.PORT;
-const prisma = new PrismaClient();
 
 // Middleware to parse JSON request bodies
 app.use(express.json());
+app.use(cors());
 
 // Routes
 app.locals.io = io;
