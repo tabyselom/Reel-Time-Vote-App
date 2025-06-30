@@ -4,6 +4,7 @@ import React from "react";
 import { useForm } from "react-hook-form";
 import { TextField, Button, Typography, Link } from "@mui/material";
 import { useRouter } from "next/navigation";
+import { API_BASE_URL } from "@/app/constant";
 
 type SignupFormInputs = {
   name: string;
@@ -21,7 +22,7 @@ export default function SignupPage() {
 
   const onSubmit = async (data: SignupFormInputs) => {
     try {
-      const response = await fetch("http://localhost:5000/api/user/create", {
+      const response = await fetch(`${API_BASE_URL}/api/user/create`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),

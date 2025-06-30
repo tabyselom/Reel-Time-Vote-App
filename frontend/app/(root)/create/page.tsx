@@ -5,6 +5,7 @@ import { useForm } from "react-hook-form";
 import { TextField, Button, Typography } from "@mui/material";
 import { useRouter } from "next/navigation";
 import { API_BASE_URL } from "@/app/constant";
+import Link from "next/link";
 
 type PollFormInputs = {
   question: string;
@@ -17,8 +18,11 @@ export default function CreatePage() {
     handleSubmit,
     formState: { errors, isSubmitting },
   } = useForm<PollFormInputs>();
+
   const [pollId, setPollId] = useState<string | null>(null);
   const router = useRouter();
+  const storedUserId =
+    typeof window !== "undefined" ? localStorage.getItem("userId") : null;
 
   const onSubmit = async (data: PollFormInputs) => {
     try {
@@ -29,7 +33,7 @@ export default function CreatePage() {
         },
         body: JSON.stringify({
           question: data.question,
-          userId: localStorage.getItem("userId"),
+          userId: storedUserId,
           options: data.options.split(",").map((option) => option.trim()),
         }),
       });
@@ -56,82 +60,105 @@ export default function CreatePage() {
     }
   };
 
+  // Main return
   return (
     <div className="flex flex-col items-center p-8 min-h-screen">
-      <Typography variant="h4" className="mb-6 font-bold text-white">
-        Create Poll
-      </Typography>
-
-      {!pollId ? (
-        <form
-          onSubmit={handleSubmit(onSubmit)}
-          className="w-full max-w-md space-y-6"
-        >
-          <TextField
-            label="Poll Question"
-            {...register("question", { required: "Question is required" })}
-            error={!!errors.question}
-            helperText={errors.question?.message}
-            fullWidth
-            InputLabelProps={{ style: { color: "#ccc" } }}
-            InputProps={{ style: { color: "#fff" } }}
-          />
-
-          <TextField
-            label="Options (comma separated)"
-            {...register("options", {
-              required: "At least one option is required",
-            })}
-            error={!!errors.options}
-            helperText={errors.options?.message}
-            fullWidth
-            InputLabelProps={{ style: { color: "#ccc" } }}
-            InputProps={{ style: { color: "#fff" } }}
-          />
-
-          <Button
-            type="submit"
-            variant="contained"
-            color="primary"
-            fullWidth
-            disabled={isSubmitting}
-          >
-            {isSubmitting ? "Creating..." : "Create Poll"}
-          </Button>
-        </form>
-      ) : (
-        <div className="flex flex-col items-center space-y-4 mt-8">
-          <Typography variant="h6" className="text-green-400">
-            🎉 Poll created successfully!
+      {storedUserId ? (
+        <>
+          <Typography variant="h4" className="mb-6 font-bold text-white">
+            Create Poll
           </Typography>
 
-          <Typography className="text-white">
-            Poll ID: <span className="text-blue-400">{pollId}</span>
-          </Typography>
-
-          <Typography className="text-white">
-            Share this link: <br />
-            <a
-              href={`http://localhost:3000/vote/${pollId}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-blue-400 underline"
+          {!pollId ? (
+            <form
+              onSubmit={handleSubmit(onSubmit)}
+              className="w-full max-w-md space-y-6"
             >
-              http://localhost:3000/vote/{pollId}
-            </a>
+              <TextField
+                label="Poll Question"
+                {...register("question", { required: "Question is required" })}
+                error={!!errors.question}
+                helperText={errors.question?.message}
+                fullWidth
+                InputLabelProps={{ style: { color: "#ccc" } }}
+                InputProps={{ style: { color: "#fff" } }}
+              />
+
+              <TextField
+                label="Options (comma separated)"
+                {...register("options", {
+                  required: "At least one option is required",
+                })}
+                error={!!errors.options}
+                helperText={errors.options?.message}
+                fullWidth
+                InputLabelProps={{ style: { color: "#ccc" } }}
+                InputProps={{ style: { color: "#fff" } }}
+              />
+
+              <Button
+                type="submit"
+                variant="contained"
+                color="primary"
+                fullWidth
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? "Creating..." : "Create Poll"}
+              </Button>
+            </form>
+          ) : (
+            <div className="flex flex-col items-center space-y-4 mt-8">
+              <Typography variant="h6" className="text-green-400">
+                🎉 Poll created successfully!
+              </Typography>
+
+              <Typography className="text-white">
+                Poll ID: <span className="text-blue-400">{pollId}</span>
+              </Typography>
+
+              <Typography className="text-white">
+                Share this link: <br />
+                <a
+                  href={`http://localhost:3000/vote/${pollId}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-400 underline"
+                >
+                  http://localhost:3000/vote/{pollId}
+                </a>
+              </Typography>
+
+              <Button onClick={handleCopy} variant="outlined" color="secondary">
+                Copy Link
+              </Button>
+
+              <Button
+                onClick={() => router.push("/")}
+                variant="contained"
+                color="primary"
+              >
+                Back to Home
+              </Button>
+            </div>
+          )}
+        </>
+      ) : (
+        <div className="flex flex-col items-center space-y-4">
+          <Typography variant="h5" className="text-white">
+            To create a poll you need to log in
           </Typography>
-
-          <Button onClick={handleCopy} variant="outlined" color="secondary">
-            Copy Link
-          </Button>
-
-          <Button
-            onClick={() => router.push("/")}
-            variant="contained"
-            color="primary"
-          >
-            Back to Home
-          </Button>
+          <div className="flex space-x-4">
+            <Link href="/signup">
+              <Button variant="outlined" color="primary">
+                Sign Up
+              </Button>
+            </Link>
+            <Link href="/login">
+              <Button variant="contained" color="primary">
+                Log In
+              </Button>
+            </Link>
+          </div>
         </div>
       )}
     </div>
