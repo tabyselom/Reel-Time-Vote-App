@@ -11,8 +11,9 @@ import {
 
 import { useRouter } from "next/navigation";
 import { io } from "socket.io-client";
+import { API_BASE_URL, SOCKET_URL } from "@/app/constant";
 
-const socket = io("http://localhost:5000");
+const socket = io(SOCKET_URL);
 
 interface Option {
   id: string;
@@ -35,7 +36,7 @@ export default function VotePage({ params }: { params: { id: string } }) {
 
   const fetchPoll = async () => {
     try {
-      const response = await fetch(`http://localhost:5000/api/poll/get/${id}`);
+      const response = await fetch(`${API_BASE_URL}/api/poll/get/${id}`);
       const result = await response.json();
       setPoll(result);
     } catch (error) {
@@ -73,7 +74,7 @@ export default function VotePage({ params }: { params: { id: string } }) {
 
     try {
       const response = await fetch(
-        `http://localhost:5000/api/poll/vote/${selectedOption}`,
+        `${API_BASE_URL}/api/poll/vote/${selectedOption}`,
         { method: "POST" }
       );
 

@@ -1,3 +1,5 @@
+import { API_BASE_URL } from "../constant";
+
 export type LoginFormInputs = {
   email: string;
   password: string;
@@ -7,7 +9,7 @@ export const Login = async (data: LoginFormInputs) => {
   console.log("Submitting login data:", data);
 
   try {
-    const response = await fetch("http://localhost:5000/api/user/login", {
+    const response = await fetch(`${API_BASE_URL}/api/user/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),

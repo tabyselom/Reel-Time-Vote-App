@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { TextField, Button, Typography } from "@mui/material";
 import { useRouter } from "next/navigation";
+import { API_BASE_URL } from "@/app/constant";
 
 type PollFormInputs = {
   question: string;
@@ -21,7 +22,7 @@ export default function CreatePage() {
 
   const onSubmit = async (data: PollFormInputs) => {
     try {
-      const res = await fetch("http://localhost:5000/api/poll/create", {
+      const res = await fetch(`${API_BASE_URL}/api/poll/create`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -50,7 +51,7 @@ export default function CreatePage() {
 
   const handleCopy = () => {
     if (pollId) {
-      navigator.clipboard.writeText(`http://localhost:3000/vote/${pollId}`);
+      navigator.clipboard.writeText(`/vote/${pollId}`);
       alert("Poll link copied to clipboard!");
     }
   };

@@ -9,7 +9,11 @@ import cors from "cors";
 
 const app = express();
 const server = createServer(app);
-const io = new Server(server);
+const io = new Server(server, {
+  cors: {
+    origin: "*",
+  },
+});
 const PORT = process.env.PORT;
 
 // Middleware to parse JSON request bodies
@@ -32,7 +36,7 @@ io.on("connection", (socket) => {
 // Error Handler Middleware
 app.use(errorHandler);
 
-// Start the server
-app.listen(PORT, () => {
+// Start the server (correct one)
+server.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
 });

@@ -15,6 +15,9 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "QuickPoll",
   description: "A Real-Time Polling Application",
+  icons: {
+    icon: "/QuickPollIcon.svg",
+  },
 };
 
 export default function RootLayout({
