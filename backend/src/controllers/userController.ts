@@ -4,7 +4,6 @@ import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
-// POST /api/user/create
 export const createUser = async (
   req: Request<{}, {}, CreateUserBody>,
   res: Response

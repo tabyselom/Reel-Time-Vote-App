@@ -4,7 +4,6 @@ import { PollBody } from "../types/pollTypes";
 
 const prisma = new PrismaClient();
 
-// Placeholder for the int type
 const listPoll = async (req: Request, res: Response) => {
   try {
     const myPolls = await prisma.polls.findMany({
@@ -62,7 +61,7 @@ const createPoll = async (req: Request<{}, {}, PollBody>, res: Response) => {
       )
     );
 
-    // Emit event after poll creation
+   
     io.emit("pollCreated", { poll: newPoll, options: createOptions });
 
     res.status(201).json({ poll: newPoll, options: createOptions });

@@ -16,7 +16,6 @@ const io = new Server(server, {
 });
 const PORT = process.env.PORT;
 
-// Middleware to parse JSON request bodies
 app.use(express.json());
 app.use(cors());
 
@@ -33,10 +32,8 @@ io.on("connection", (socket) => {
   });
 });
 
-// Error Handler Middleware
 app.use(errorHandler);
 
-// Start the server (correct one)
 server.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
 });
