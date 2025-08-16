@@ -121,11 +121,11 @@ export const votePoll = async (req: Request<{ id: string }>, res: Response) => {
 
     const whereClause = userId
       ? {
-          poll_id: option.poll_id, // ✅ now guaranteed to exist
+          poll_id: option?.poll_id, // ✅ now guaranteed to exist
           OR: [{ user_id: userId }, { voter_ip: ip }],
         }
       : {
-          poll_id: option.poll_id,
+          poll_id: option?.poll_id,
           voter_ip: ip,
         };
 
