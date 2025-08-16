@@ -21,7 +21,7 @@ function LoginPage() {
   // Run CheckUser on mount
   useEffect(() => {
     CheckUser();
-  }, []);
+  }, [CheckUser]);
 
   // Watch for user changes
   useEffect(() => {

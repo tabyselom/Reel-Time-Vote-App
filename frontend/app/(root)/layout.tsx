@@ -1,4 +1,4 @@
-import Navbar from "../../components/Navbar";
+import Navbar from "@/components/Navbar";
 import { Toaster } from "react-hot-toast";
 
 export default function rootLayout({
