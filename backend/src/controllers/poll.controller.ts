@@ -17,13 +17,13 @@ export const createPoll = async (req: Request, res: Response) => {
           .status(400)
           .json({ message: "Options must be with at least two items" });
       } else {
-        const newPoll = await prisma.poll.create({
+        const newPoll = await prisma.polls.create({
           data: { question, userId },
         });
 
         const newOptions = await Promise.all(
           options.map((option) =>
-            prisma.option.create({
+            prisma.options.create({
               data: {
                 pollId: newPoll.id,
                 text: option,
@@ -49,7 +49,7 @@ export const getMyPolls = async (req: Request, res: Response) => {
   const userId = req.user;
 
   try {
-    const polls = await prisma.poll.findMany({
+    const polls = await prisma.polls.findMany({
       where: { userId },
       include: { Option: true },
     });
@@ -70,7 +70,7 @@ export const getPollById = async (
 ) => {
   const { id: pollId } = req.params;
   try {
-    const poll = await prisma.poll.findUnique({
+    const poll = await prisma.polls.findUnique({
       where: { id: pollId },
       include: { Option: true },
     });
@@ -116,7 +116,7 @@ export const getPollById = async (
 //     }
 
 //     if (userId) {
-//       const hasVoted = await prisma.vote.findFirst({
+//       const hasVoted = await prisma.votes.findFirst({
 //         where: {
 //           pollId,
 //           OR: [{ userId }, { voter_ip: ip }],
@@ -126,7 +126,7 @@ export const getPollById = async (
 //         res.status(200).json({ message: "You have already voted" });
 //       }
 //     } else {
-//       const hasVoted = await prisma.vote.findFirst({
+//       const hasVoted = await prisma.votes.findFirst({
 //         where: { pollId, voter_ip: ip },
 //       });
 //       if (hasVoted) {
@@ -160,11 +160,11 @@ export const votePoll = async (req: Request<{ id: string }>, res: Response) => {
     const ip: string = req.connection.remoteAddress || "";
 
     // option exists
-    const option = await prisma.option.findUnique({
+    const option = await prisma.options.findUnique({
       where: { id: optionId },
     });
     if (userId) {
-      const hasVoted = await prisma.vote.findFirst({
+      const hasVoted = await prisma.votes.findFirst({
         where: {
           pollId: option?.pollId,
           OR: [{ userId }, { voter_ip: ip }],
@@ -175,7 +175,7 @@ export const votePoll = async (req: Request<{ id: string }>, res: Response) => {
         res.status(200).json({ message: "You have already voted", data });
       }
     } else {
-      const hasVoted = await prisma.vote.findFirst({
+      const hasVoted = await prisma.votes.findFirst({
         where: { pollId: option?.pollId, voter_ip: ip },
       });
       if (hasVoted) {
@@ -190,7 +190,7 @@ export const votePoll = async (req: Request<{ id: string }>, res: Response) => {
     } else {
       // Record the vote
       if (userId) {
-        await prisma.vote.create({
+        await prisma.votes.create({
           data: {
             userId,
             pollId: option.pollId,
@@ -199,7 +199,7 @@ export const votePoll = async (req: Request<{ id: string }>, res: Response) => {
           },
         });
       } else {
-        await prisma.vote.create({
+        await prisma.votes.create({
           data: {
             pollId: option.pollId,
             optionId,
@@ -208,7 +208,7 @@ export const votePoll = async (req: Request<{ id: string }>, res: Response) => {
         });
       }
 
-      await prisma.option.update({
+      await prisma.options.update({
         where: { id: optionId },
         data: {
           votesCount: { increment: 1 },

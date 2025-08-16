@@ -11,7 +11,7 @@ const something = async (
   res: Response
 ) => {
   if (hasVoted) {
-    const poll = await prisma.poll.findUnique({
+    const poll = await prisma.polls.findUnique({
       where: { id: pollId },
       include: { Option: true },
     });
@@ -19,7 +19,7 @@ const something = async (
       res.status(404).json({ message: "Poll not found" });
     } else {
       const totalCount: number = poll.Option.reduce(
-        (sum, opt) => sum + (opt.votesCount ?? 0),
+        (sum: number, opt) => sum + (opt.votesCount ?? 0),
         0
       );
       res
@@ -67,7 +67,7 @@ export const checkVotePollProtection = async (
     }
 
     if (userId) {
-      const hasVoted = await prisma.vote.findFirst({
+      const hasVoted = await prisma.votes.findFirst({
         where: {
           pollId,
           OR: [{ userId }, { voter_ip: ip }],
@@ -76,7 +76,7 @@ export const checkVotePollProtection = async (
       something(pollId, hasVoted, next, res);
     } else {
       console.log(pollId);
-      const hasVoted = await prisma.vote.findFirst({
+      const hasVoted = await prisma.votes.findFirst({
         where: { pollId, voter_ip: ip },
       });
 
