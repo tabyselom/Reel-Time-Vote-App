@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import jwt, { decode } from "jsonwebtoken";
-import { PrismaClient } from "../generated/prisma";
+import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient(); // adjust your import path accordingly
 
@@ -18,8 +18,22 @@ const something = async (
     if (!poll) {
       res.status(404).json({ message: "Poll not found" });
     } else {
-      const totalCount: number = poll.Option.reduce(
-        (sum: number, opt) => sum + (opt.votesCount ?? 0),
+      interface Option {
+        id: string;
+        text: string;
+        votesCount?: number;
+        // add other fields if needed
+      }
+
+      interface Poll {
+        id: string;
+        Option: Option[];
+        // add other fields if needed
+      }
+
+      const pollTyped = poll as Poll;
+      const totalCount: number = pollTyped.Option.reduce(
+        (sum: number, opt: Option) => sum + (opt.votesCount ?? 0),
         0
       );
       res
