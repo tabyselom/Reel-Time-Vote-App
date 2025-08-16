@@ -10,15 +10,11 @@ export const createPoll = async (req: Request, res: Response) => {
   const userId = req.user; // make sure you set req.user somewhere in auth middleware
 
   if (!question || !options) {
-    return res
-      .status(400)
-      .json({ message: "Please provide question and options" });
+    res.status(400).json({ message: "Please provide question and options" });
   }
 
   if (!Array.isArray(options) || options.length < 2) {
-    return res
-      .status(400)
-      .json({ message: "Options must have at least two items" });
+    res.status(400).json({ message: "Options must have at least two items" });
   }
 
   try {
@@ -59,7 +55,7 @@ export const getMyPolls = async (req: Request, res: Response) => {
     });
 
     if (polls.length === 0) {
-      return res.status(404).json({ message: "No polls found" });
+      res.status(404).json({ message: "No polls found" });
     }
 
     res.status(200).json(polls);
@@ -83,7 +79,7 @@ export const getPollById = async (
     });
 
     if (!poll) {
-      return res.status(404).json({ message: "Poll not found" });
+      res.status(404).json({ message: "Poll not found" });
     }
 
     res.status(200).json(poll);
@@ -115,7 +111,7 @@ export const votePoll = async (req: Request<{ id: string }>, res: Response) => {
     const option = await prisma.options.findUnique({ where: { id: optionId } });
 
     if (!option) {
-      return res.status(400).json({ message: "Invalid option selected" });
+      res.status(400).json({ message: "Invalid option selected" });
     }
 
     // Check if user or IP has already voted
@@ -130,7 +126,7 @@ export const votePoll = async (req: Request<{ id: string }>, res: Response) => {
 
     if (hasVoted) {
       const { voter_ip, voted_at, ...data } = hasVoted;
-      return res.status(200).json({ message: "You have already voted", data });
+      res.status(200).json({ message: "You have already voted", data });
     }
 
     // Record the vote
