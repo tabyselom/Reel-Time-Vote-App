@@ -79,7 +79,7 @@ export const checkVotePollProtection = async (
     if (userId) {
       hasVoted = await prisma.votes.findFirst({
         where: {
-          poll_id: pollId, // ✅ snake_case
+          pollId, // ✅ snake_case
           OR: [{ userId, voter_ip: ip }],
         },
       });
