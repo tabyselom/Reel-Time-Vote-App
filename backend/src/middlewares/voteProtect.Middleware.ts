@@ -80,10 +80,10 @@ export const checkVotePollProtection = async (
     if (userId) {
       hasVoted = await prisma.votes.findFirst({
         where: {
-          pollId: pollId, // TypeScript property
+          pollId: pollId, // ✅ correct
           OR: [
-            { userId: userId }, // TS property
-            { voter_ip: ip }, // TS property (matches model exactly)
+            { userId: userId }, // ✅ correct
+            { voter_ip: ip }, // stays snake_case because your field in the schema is exactly `voter_ip`
           ],
         },
       });
