@@ -76,21 +76,22 @@ export const checkVotePollProtection = async (
 
     // Check if the user/IP has voted
     let hasVoted;
+
     if (userId) {
       hasVoted = await prisma.votes.findFirst({
         where: {
-          pollId, // must be camelCase
+          poll_id: pollId, // use DB field name
           OR: [
-            { userId }, // object 1
-            { voterIp: ip }, // object 2
+            { user_id: userId }, // use DB field name
+            { voter_ip: ip }, // use DB field name
           ],
         },
       });
     } else {
       hasVoted = await prisma.votes.findFirst({
         where: {
-          pollId,
-          voterIp: ip,
+          poll_id: pollId, // DB field name
+          voter_ip: ip, // DB field name
         },
       });
     }
