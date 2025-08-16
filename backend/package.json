@@ -15,7 +15,7 @@
   "scripts": {
     "build": "tsc",
     "dev": "nodemon  src/server.ts",
-    "start": "node src/server.ts"
+    "start": "node build/app.js"
   },
   "keywords": [],
   "author": "",
