@@ -7,15 +7,19 @@ export const userStore = create((set) => ({
   user: null,
   isSigningUp: false,
   isLoggingIn: false,
+  isChecking: false,
 
   CheckUser: async () => {
+    set({ isChecking: true });
     try {
       const res = await axiosInstance.get("/auth");
       if (res.status !== 200) {
         set({ user: null });
+        set({ isChecking: false });
         return;
       }
       set({ user: res.data });
+      set({ isChecking: false });
     } catch {
       set({ user: null });
     }

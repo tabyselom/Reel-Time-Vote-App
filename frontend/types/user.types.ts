@@ -13,6 +13,7 @@ export type UserStoreType = {
   user: user | null;
   isSigningUp: boolean;
   isLoggingIn: boolean;
+  isChecking: boolean;
   //dsd
   CheckUser: () => void;
   Signup: (data: { fullname: string; email: string; password: string }) => void;

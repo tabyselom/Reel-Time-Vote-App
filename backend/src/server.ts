@@ -8,7 +8,7 @@ import { app, server } from "./lib/socket";
 
 config();
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 500;
 
 app.use(cookieParser());
 app.use(

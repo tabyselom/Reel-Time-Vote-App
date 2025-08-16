@@ -16,7 +16,8 @@ import { useRouter } from "next/navigation";
 
 function LoginPage() {
   const router = useRouter();
-  const { isLoggingIn, Login, user, CheckUser } = userStore() as UserStoreType;
+  const { isLoggingIn, Login, user, CheckUser, isChecking } =
+    userStore() as UserStoreType;
 
   // Run CheckUser on mount
   useEffect(() => {
@@ -25,10 +26,12 @@ function LoginPage() {
 
   // Watch for user changes
   useEffect(() => {
-    if (user) {
-      router.push("/");
+    if (!isChecking) {
+      if (user) {
+        router.push("/");
+      }
     }
-  }, [user, router]);
+  }, [user, router, isChecking]);
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -42,7 +45,9 @@ function LoginPage() {
     };
 
     Login(data);
-    router.push("/");
+    if (!isLoggingIn) {
+      router.push("/");
+    }
   };
 
   return (
