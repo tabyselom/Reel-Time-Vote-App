@@ -1,10 +1,13 @@
 import { Request, Response, NextFunction } from "express";
-import jwt, { decode } from "jsonwebtoken";
+import jwt from "jsonwebtoken";
 import { PrismaClient } from "@prisma/client";
 
-const prisma = new PrismaClient(); // adjust your import path accordingly
+const prisma = new PrismaClient();
 
-const something = async (
+/**
+ * Handle case where the user/IP has already voted
+ */
+const handleAlreadyVoted = async (
   pollId: string,
   hasVoted: any,
   next: NextFunction,
@@ -13,38 +16,30 @@ const something = async (
   if (hasVoted) {
     const poll = await prisma.polls.findUnique({
       where: { id: pollId },
-      include: { options: true },
+      include: { options: true }, // ✅ correct plural relation
     });
+
     if (!poll) {
       res.status(404).json({ message: "Poll not found" });
-    } else {
-      interface Option {
-        id: string;
-        text: string;
-        votesCount?: number;
-        // add other fields if needed
-      }
-
-      interface Poll {
-        id: string;
-        Option: Option[];
-        // add other fields if needed
-      }
-
-      const pollTyped = poll as Poll;
-      const totalCount: number = pollTyped.Option.reduce(
-        (sum: number, opt: Option) => sum + (opt.votesCount ?? 0),
-        0
-      );
-      res
-        .status(200)
-        .json({ message: "You have already voted", poll, totalCount });
     }
+
+    // Total votes count
+    const totalCount: number = poll.options.reduce(
+      (sum: number, opt: any) => sum + (opt.votes_count ?? 0), // ✅ use snake_case
+      0
+    );
+
+    res
+      .status(200)
+      .json({ message: "You have already voted", poll, totalCount });
   } else {
     next();
   }
 };
 
+/**
+ * Middleware to protect poll voting routes
+ */
 export const checkVotePollProtection = async (
   req: Request<{ id: string }>,
   res: Response,
@@ -55,48 +50,48 @@ export const checkVotePollProtection = async (
 
   if (!pollId || pollId.length <= 12) {
     res.status(400).json({ status: "error", message: "Poll ID is required." });
-    return;
   }
+
   if (!ip) {
     res
       .status(401)
       .json({ status: "error", message: "Unable to detect client IP." });
-    return;
   }
 
   try {
     let userId = "";
 
+    // Decode token if present
     if (req.cookies.token) {
       try {
         const decoded = jwt.verify(
           req.cookies.token,
           `${process.env.JWT_SECRET_KEY}`
         ) as { userId: string };
-
         userId = decoded.userId;
       } catch (err) {
         console.warn("Invalid token:", err);
       }
     }
 
+    // Check if the user/IP has voted
+    let hasVoted;
     if (userId) {
-      const hasVoted = await prisma.votes.findFirst({
+      hasVoted = await prisma.votes.findFirst({
         where: {
-          poll_id: pollId,
+          poll_id: pollId, // ✅ snake_case
           OR: [{ user_id: userId }, { voter_ip: ip }],
         },
       });
-      something(pollId, hasVoted, next, res);
     } else {
-      console.log(pollId);
-      const hasVoted = await prisma.votes.findFirst({
+      hasVoted = await prisma.votes.findFirst({
         where: { poll_id: pollId, voter_ip: ip },
       });
-
-      something(pollId, hasVoted, next, res);
     }
+
+    await handleAlreadyVoted(pollId, hasVoted, next, res);
   } catch (error) {
+    console.error("Vote protection error:", error);
     res.status(500).json({ message: "Internal Server Error" });
   }
 };

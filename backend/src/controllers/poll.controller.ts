@@ -115,14 +115,21 @@ export const votePoll = async (req: Request<{ id: string }>, res: Response) => {
     }
 
     // Check if user or IP has already voted
-    const hasVoted = await prisma.votes.findFirst({
-      where: userId
-        ? {
-            poll_id: option?.poll_id,
-            OR: [{ user_id: userId }, { voter_ip: ip }],
-          }
-        : { poll_id: option?.poll_id, voter_ip: ip },
-    });
+    if (!option) {
+      res.status(400).json({ message: "Invalid option selected" });
+    }
+
+    const whereClause = userId
+      ? {
+          poll_id: option.poll_id, // ✅ now guaranteed to exist
+          OR: [{ user_id: userId }, { voter_ip: ip }],
+        }
+      : {
+          poll_id: option.poll_id,
+          voter_ip: ip,
+        };
+
+    const hasVoted = await prisma.votes.findFirst({ where: whereClause });
 
     if (hasVoted) {
       const { voter_ip, voted_at, ...data } = hasVoted;
