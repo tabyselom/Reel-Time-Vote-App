@@ -4,47 +4,51 @@ import jwt from "jsonwebtoken";
 
 const prisma = new PrismaClient();
 
+// Create a new poll
 export const createPoll = async (req: Request, res: Response) => {
   const { question, options } = req.body;
-  const userId = req.user;
+  const userId = req.user; // make sure you set req.user somewhere in auth middleware
 
   if (!question || !options) {
-    res.status(400).json({ message: "Please provide question and options" });
-  } else {
-    try {
-      if (!Array.isArray(options) || options.length < 2) {
-        res
-          .status(400)
-          .json({ message: "Options must be with at least two items" });
-      } else {
-        const newPoll = await prisma.polls.create({
-          data: { question, user_id: userId },
-        });
+    return res
+      .status(400)
+      .json({ message: "Please provide question and options" });
+  }
 
-        const newOptions = await Promise.all(
-          options.map((option) =>
-            prisma.options.create({
-              data: {
-                poll_id: newPoll.id,
-                text: option,
-              },
-            })
-          )
-        );
-        res.status(201).json({
-          id: newPoll.id,
-          poll: newPoll,
-          options: newOptions,
-        });
-      }
+  if (!Array.isArray(options) || options.length < 2) {
+    return res
+      .status(400)
+      .json({ message: "Options must have at least two items" });
+  }
 
-      // Logic to create a poll
-    } catch (error) {
-      res.status(500).json({ error: "Failed to create poll" });
-    }
+  try {
+    const newPoll = await prisma.polls.create({
+      data: { question, user_id: userId },
+    });
+
+    const newOptions = await Promise.all(
+      options.map((option: string) =>
+        prisma.options.create({
+          data: {
+            poll_id: newPoll.id,
+            text: option,
+          },
+        })
+      )
+    );
+
+    res.status(201).json({
+      id: newPoll.id,
+      poll: newPoll,
+      options: newOptions,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Failed to create poll" });
   }
 };
 
+// Get polls created by the current user
 export const getMyPolls = async (req: Request, res: Response) => {
   const userId = req.user;
 
@@ -55,93 +59,41 @@ export const getMyPolls = async (req: Request, res: Response) => {
     });
 
     if (polls.length === 0) {
-      res.status(404).json({ message: "No polls found" });
-    } else {
-      res.status(200).json(polls);
+      return res.status(404).json({ message: "No polls found" });
     }
+
+    res.status(200).json(polls);
   } catch (error) {
+    console.error(error);
     res.status(500).json({ error: "Failed to fetch polls" });
   }
 };
 
+// Get poll by ID
 export const getPollById = async (
   req: Request<{ id: string }>,
   res: Response
 ) => {
   const { id: pollId } = req.params;
+
   try {
     const poll = await prisma.polls.findUnique({
       where: { id: pollId },
       include: { options: true },
     });
+
     if (!poll) {
-      res.status(404).json({ message: "Poll not found" });
-    } else {
-      res.status(200).json(poll);
+      return res.status(404).json({ message: "Poll not found" });
     }
+
+    res.status(200).json(poll);
   } catch (error) {
+    console.error(error);
     res.status(500).json({ error: "Failed to fetch poll" });
   }
 };
 
-// export const checkPollForVote = async (
-//   req: Request<{ id: string }>,
-//   res: Response
-// ) => {
-//   try {
-//     let userId = "";
-
-//     if (req.cookies.token) {
-//       try {
-//         const decoded = jwt.verify(
-//           req.cookies.token,
-//           `${process.env.JWT_SECRET_KEY}`
-//         ) as { userId: string };
-
-//         userId = decoded.userId;
-//       } catch (err) {
-//         console.warn("Invalid token:", err);
-//       }
-//     }
-
-//     const { id: pollId } = req.params;
-//     let ip = req.socket.remoteAddress;
-
-//     if (!pollId) {
-//       res.status(400).json({ message: "Poll ID is required." });
-//     }
-
-//     if (!ip) {
-//       res.status(401).json({ message: "Unable to detect client IP." });
-//     }
-
-//     if (userId) {
-//       const hasVoted = await prisma.votes.findFirst({
-//         where: {
-//           pollId,
-//           OR: [{ userId }, { voter_ip: ip }],
-//         },
-//       });
-//       if (hasVoted) {
-//         res.status(200).json({ message: "You have already voted" });
-//       }
-//     } else {
-//       const hasVoted = await prisma.votes.findFirst({
-//         where: { pollId, voter_ip: ip },
-//       });
-//       if (hasVoted) {
-//         const { voter_ip, voted_at, ...data } = hasVoted;
-//         res.status(200).json({ message: "You have already voted", data });
-//       } else {
-//         res.status(200).json(res);
-//       }
-//     }
-//   } catch (error) {
-//     console.error("Vote protection error:", error);
-//     res.status(500).json({ message: "Internal Server Error" });
-//   }
-// };
-
+// Vote on a poll option
 export const votePoll = async (req: Request<{ id: string }>, res: Response) => {
   let userId = "";
   if (req.cookies.token) {
@@ -159,66 +111,45 @@ export const votePoll = async (req: Request<{ id: string }>, res: Response) => {
     const { id: optionId } = req.params;
     const ip: string = req.connection.remoteAddress || "";
 
-    // option exists
-    const option = await prisma.options.findUnique({
-      where: { id: optionId },
-    });
-    if (userId) {
-      const hasVoted = await prisma.votes.findFirst({
-        where: {
-          poll_id: option?.pollId,
-          OR: [{ user_id: userId }, { voter_ip: ip }],
-        },
-      });
-      if (hasVoted) {
-        const { voter_ip, voted_at, ...data } = hasVoted;
-        res.status(200).json({ message: "You have already voted", data });
-      }
-    } else {
-      const hasVoted = await prisma.votes.findFirst({
-        where: { poll_id: option?.pollId, voter_ip: ip },
-      });
-      if (hasVoted) {
-        const { voter_ip, voted_at, ...data } = hasVoted;
-
-        res.status(200).json({ message: "You have already voted", data });
-      }
-    }
+    // Option exists
+    const option = await prisma.options.findUnique({ where: { id: optionId } });
 
     if (!option) {
-      res.status(400).json({ message: "Invalid option selected" });
-    } else {
-      // Record the vote
-      if (userId) {
-        await prisma.votes.create({
-          data: {
-            user_id: userId,
-            poll_id: option.poll_id,
-            option_id: optionId,
-            voter_ip: ip,
-          },
-        });
-      } else {
-        await prisma.votes.create({
-          data: {
-            poll_id: option.pollId,
-            option_id: optionId,
-            voter_ip: ip,
-          },
-        });
-      }
-
-      await prisma.options.update({
-        where: { id: optionId },
-        data: {
-          votesCount: { increment: 1 },
-        },
-      });
-
-      res.status(200).json({ message: "Vote recorded successfully" });
+      return res.status(400).json({ message: "Invalid option selected" });
     }
 
-    // Check if the user or IP has already voted in this poll
+    // Check if user or IP has already voted
+    const hasVoted = await prisma.votes.findFirst({
+      where: userId
+        ? {
+            poll_id: option.poll_id,
+            OR: [{ user_id: userId }, { voter_ip: ip }],
+          }
+        : { poll_id: option.poll_id, voter_ip: ip },
+    });
+
+    if (hasVoted) {
+      const { voter_ip, voted_at, ...data } = hasVoted;
+      return res.status(200).json({ message: "You have already voted", data });
+    }
+
+    // Record the vote
+    await prisma.votes.create({
+      data: {
+        poll_id: option.poll_id,
+        option_id: optionId,
+        voter_ip: ip,
+        ...(userId && { user_id: userId }),
+      },
+    });
+
+    // Increment the vote count
+    await prisma.options.update({
+      where: { id: optionId },
+      data: { votes_count: { increment: 1 } },
+    });
+
+    res.status(200).json({ message: "Vote recorded successfully" });
   } catch (error) {
     console.error("Error recording vote:", error);
     res.status(500).json({ error: "Failed to record vote" });
