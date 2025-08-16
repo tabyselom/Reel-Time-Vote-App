@@ -13,7 +13,7 @@ const something = async (
   if (hasVoted) {
     const poll = await prisma.polls.findUnique({
       where: { id: pollId },
-      include: { Option: true },
+      include: { options: true },
     });
     if (!poll) {
       res.status(404).json({ message: "Poll not found" });
@@ -83,7 +83,7 @@ export const checkVotePollProtection = async (
     if (userId) {
       const hasVoted = await prisma.votes.findFirst({
         where: {
-          pollId,
+          poll_id: pollId,
           OR: [{ user_id: userId }, { voter_ip: ip }],
         },
       });

@@ -118,10 +118,10 @@ export const votePoll = async (req: Request<{ id: string }>, res: Response) => {
     const hasVoted = await prisma.votes.findFirst({
       where: userId
         ? {
-            poll_id: option.poll_id,
+            poll_id: option?.poll_id,
             OR: [{ user_id: userId }, { voter_ip: ip }],
           }
-        : { poll_id: option.poll_id, voter_ip: ip },
+        : { poll_id: option?.poll_id, voter_ip: ip },
     });
 
     if (hasVoted) {
@@ -132,7 +132,7 @@ export const votePoll = async (req: Request<{ id: string }>, res: Response) => {
     // Record the vote
     await prisma.votes.create({
       data: {
-        poll_id: option.poll_id,
+        poll_id: option?.poll_id,
         option_id: optionId,
         voter_ip: ip,
         ...(userId && { user_id: userId }),
