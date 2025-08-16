@@ -18,14 +18,14 @@ export const createPoll = async (req: Request, res: Response) => {
           .json({ message: "Options must be with at least two items" });
       } else {
         const newPoll = await prisma.polls.create({
-          data: { question, userId },
+          data: { question, user_id: userId },
         });
 
         const newOptions = await Promise.all(
           options.map((option) =>
             prisma.options.create({
               data: {
-                pollId: newPoll.id,
+                poll_id: newPoll.id,
                 text: option,
               },
             })
@@ -50,8 +50,8 @@ export const getMyPolls = async (req: Request, res: Response) => {
 
   try {
     const polls = await prisma.polls.findMany({
-      where: { userId },
-      include: { Option: true },
+      where: { user_id: userId },
+      include: { options: true },
     });
 
     if (polls.length === 0) {
@@ -72,7 +72,7 @@ export const getPollById = async (
   try {
     const poll = await prisma.polls.findUnique({
       where: { id: pollId },
-      include: { Option: true },
+      include: { options: true },
     });
     if (!poll) {
       res.status(404).json({ message: "Poll not found" });
@@ -166,8 +166,8 @@ export const votePoll = async (req: Request<{ id: string }>, res: Response) => {
     if (userId) {
       const hasVoted = await prisma.votes.findFirst({
         where: {
-          pollId: option?.pollId,
-          OR: [{ userId }, { voter_ip: ip }],
+          poll_id: option?.pollId,
+          OR: [{ user_id: userId }, { voter_ip: ip }],
         },
       });
       if (hasVoted) {
@@ -176,7 +176,7 @@ export const votePoll = async (req: Request<{ id: string }>, res: Response) => {
       }
     } else {
       const hasVoted = await prisma.votes.findFirst({
-        where: { pollId: option?.pollId, voter_ip: ip },
+        where: { poll_id: option?.pollId, voter_ip: ip },
       });
       if (hasVoted) {
         const { voter_ip, voted_at, ...data } = hasVoted;
@@ -192,17 +192,17 @@ export const votePoll = async (req: Request<{ id: string }>, res: Response) => {
       if (userId) {
         await prisma.votes.create({
           data: {
-            userId,
-            pollId: option.pollId,
-            optionId,
+            user_id: userId,
+            poll_id: option.poll_id,
+            option_id: optionId,
             voter_ip: ip,
           },
         });
       } else {
         await prisma.votes.create({
           data: {
-            pollId: option.pollId,
-            optionId,
+            poll_id: option.pollId,
+            option_id: optionId,
             voter_ip: ip,
           },
         });

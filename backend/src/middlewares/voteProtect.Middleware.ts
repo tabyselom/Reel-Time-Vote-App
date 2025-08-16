@@ -84,14 +84,14 @@ export const checkVotePollProtection = async (
       const hasVoted = await prisma.votes.findFirst({
         where: {
           pollId,
-          OR: [{ userId }, { voter_ip: ip }],
+          OR: [{ user_id: userId }, { voter_ip: ip }],
         },
       });
       something(pollId, hasVoted, next, res);
     } else {
       console.log(pollId);
       const hasVoted = await prisma.votes.findFirst({
-        where: { pollId, voter_ip: ip },
+        where: { poll_id: pollId, voter_ip: ip },
       });
 
       something(pollId, hasVoted, next, res);
