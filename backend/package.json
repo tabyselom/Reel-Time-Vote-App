@@ -14,8 +14,9 @@
   },
   "scripts": {
     "build": "tsc",
-    "dev": "nodemon  src/server.ts",
-    "start": "node build/server.js"
+    "postinstall": "prisma generate",
+    "start": "node build/server.js",
+    "dev": "ts-node src/server.ts"
   },
   "keywords": [],
   "author": "",
