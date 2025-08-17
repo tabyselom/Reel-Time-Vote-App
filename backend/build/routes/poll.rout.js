@@ -1,0 +1,12 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.pollRouter = void 0;
+const express_1 = require("express");
+exports.pollRouter = (0, express_1.Router)();
+const protectedRout_Middleware_1 = require("../middlewares/protectedRout.Middleware");
+const poll_controller_1 = require("../controllers/poll.controller");
+const voteProtect_Middleware_1 = require("../middlewares/voteProtect.Middleware");
+exports.pollRouter.post("/create", protectedRout_Middleware_1.protectedRoute, poll_controller_1.createPoll);
+exports.pollRouter.get("/my-polls", protectedRout_Middleware_1.protectedRoute, poll_controller_1.getMyPolls);
+exports.pollRouter.get("/:id", voteProtect_Middleware_1.checkVotePollProtection, poll_controller_1.getPollById);
+exports.pollRouter.put("/vote/:id", poll_controller_1.votePoll);
