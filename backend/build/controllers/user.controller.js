@@ -15,13 +15,13 @@ const signup = async (req, res) => {
             res.status(400).json({ error: "All fields are required" });
         }
         else {
-            const existingUser = await prisma.users.findUnique({ where: { email } });
+            const existingUser = await prisma.user.findUnique({ where: { email } });
             if (existingUser) {
                 res.status(400).json({ error: "Email already exists" });
             }
             else {
                 const hashedPassword = bcryptjs_1.default.hashSync(password, bcryptjs_1.default.genSaltSync(10));
-                const newUser = await prisma.users.create({
+                const newUser = await prisma.user.create({
                     data: {
                         name: fullname.trim(),
                         email,
@@ -44,7 +44,7 @@ const login = async (req, res) => {
         if (!email || !password) {
             res.status(400).json({ error: "Email and password are required" });
         }
-        const user = await prisma.users.findUnique({ where: { email: email } });
+        const user = await prisma.user.findUnique({ where: { email: email } });
         const isPasswordValid = user && bcryptjs_1.default.compareSync(password, user.password);
         if (!user || !isPasswordValid) {
             res.status(401).json({ error: "Invalid email or password" });
@@ -73,7 +73,7 @@ exports.logout = logout;
 const getMe = async (req, res) => {
     try {
         const userId = req.user;
-        const user = await prisma.users.findUnique({
+        const user = await prisma.user.findUnique({
             where: { id: userId },
             select: { id: true, name: true, email: true },
         });

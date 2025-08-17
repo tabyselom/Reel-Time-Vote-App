@@ -13,7 +13,7 @@ export const signup = async (req: Request<{}, {}, user>, res: Response) => {
     if (!fullname || !email || !password) {
       res.status(400).json({ error: "All fields are required" });
     } else {
-      const existingUser = await prisma.users.findUnique({ where: { email } });
+      const existingUser = await prisma.user.findUnique({ where: { email } });
       if (existingUser) {
         res.status(400).json({ error: "Email already exists" });
       } else {
@@ -22,7 +22,7 @@ export const signup = async (req: Request<{}, {}, user>, res: Response) => {
           bcrypt.genSaltSync(10)
         );
 
-        const newUser = await prisma.users.create({
+        const newUser = await prisma.user.create({
           data: {
             name: fullname.trim(),
             email,
@@ -43,7 +43,7 @@ export const login = async (req: Request, res: Response) => {
     if (!email || !password) {
       res.status(400).json({ error: "Email and password are required" });
     }
-    const user = await prisma.users.findUnique({ where: { email: email } });
+    const user = await prisma.user.findUnique({ where: { email: email } });
     const isPasswordValid = user && bcrypt.compareSync(password, user.password);
 
     if (!user || !isPasswordValid) {
@@ -68,7 +68,7 @@ export const logout = async (req: Request, res: Response) => {
 export const getMe = async (req: Request, res: Response) => {
   try {
     const userId = req.user;
-    const user = await prisma.users.findUnique({
+    const user = await prisma.user.findUnique({
       where: { id: userId },
       select: { id: true, name: true, email: true },
     });

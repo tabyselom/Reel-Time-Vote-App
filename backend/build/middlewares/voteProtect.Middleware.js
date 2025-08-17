@@ -12,15 +12,15 @@ const prisma = new client_1.PrismaClient();
  */
 const handleAlreadyVoted = async (pollId, hasVoted, next, res) => {
     if (hasVoted) {
-        const poll = await prisma.polls.findUnique({
+        const poll = await prisma.poll.findUnique({
             where: { id: pollId },
-            include: { options: true }, // ✅ correct plural relation
+            include: { Option: true }, // ✅ correct plural relation
         });
         if (!poll) {
             res.status(404).json({ message: "Poll not found" });
         }
-        // Total votes count
-        const totalCount = poll?.options.reduce((sum, opt) => sum + (opt.votes_count ?? 0), // ✅ use snake_case
+        // Total vote count
+        const totalCount = poll?.Option.reduce((sum, opt) => sum + (opt.vote_count ?? 0), // ✅ use snake_case
         0);
         res
             .status(200)
@@ -59,7 +59,7 @@ const checkVotePollProtection = async (req, res, next) => {
         // Check if the user/IP has voted
         let hasVoted;
         if (userId) {
-            hasVoted = await prisma.votes.findFirst({
+            hasVoted = await prisma.vote.findFirst({
                 where: {
                     pollId: pollId, // ✅ correct
                     OR: [
@@ -70,7 +70,7 @@ const checkVotePollProtection = async (req, res, next) => {
             });
         }
         else {
-            hasVoted = await prisma.votes.findFirst({
+            hasVoted = await prisma.vote.findFirst({
                 where: {
                     pollId: pollId,
                     voter_ip: ip,
